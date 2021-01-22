@@ -10,10 +10,12 @@ from aiogram.types import ReplyKeyboardRemove, \
 
 from aiogram.utils.markdown import link
 
-
 import messages
 import kb
 import audio_id
+
+#Запускаем трансформер
+import transformer
 
 
 WEBHOOK_HOST = 'https://romanychev.online'
@@ -74,7 +76,7 @@ def write_file():
 
 def read_file():
     f = open('members.txt', 'r')
-    ans = [int(i[:-1]) for i in f]
+    ans = [i[:-1] for i in f]
     f.close()
 
     return ans
@@ -100,12 +102,29 @@ async def start(msg):
         reply_markup=true_kb(user_id)
     )
 
+
 @dp.message_handler(content_types=["text"])
 async def main_logic(msg):
     chat_id = msg.chat.id
     user_id = msg['from']['username']
 
-    if msg.text == kb.smile:
+    if flag:
+        answer = transformer.predict(msg.text)
+
+        await bot.send_message(
+            chat_id,
+            answer
+        )
+        return
+
+    if msg.text.lower() == 'стоп':
+        flag = 0
+        await bot.send_message(
+            chat_id,
+            'Режим чат бота выключен',
+            reply_markup=true_kb(user_id)
+        )
+    elif msg.text == kb.smile:
         f = open('mems/' + str(random.randint(1, 5)) + '.jpg', 'rb')
         await bot.send_photo(
             chat_id,
@@ -148,11 +167,19 @@ async def main_logic(msg):
             reply_markup=key_talk
         )
     elif msg.text == kb.talk_bot:
+        flag = 1
+        await bot.send_message(
+            chat_id,
+            'Привет! Ты можешь поговорить со мной. Чтобы выключить режим чат-бота напишите слово СТОП'
+        )
+
+        '''
         await bot.send_message(
             chat_id,
             'Напиши моему другу @PMstudent_bot',
             reply_markup=true_kb(user_id)
         )
+        '''
     elif msg.text == kb.talk_man:
         n = len(members)
         m = 'В данный момент волонтеров нет. Вы можете стать первым и помочь кому-то!'
